@@ -12,15 +12,29 @@ import hashlib
 import time
 import os
 
-# API Key setup
+# API Key setup - supports both custom API key and RapidAPI proxy secret
 API_KEY = os.getenv("API_KEY")
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+RAPIDAPI_PROXY_SECRET = os.getenv("RAPIDAPI_PROXY_SECRET")
 
-async def verify_api_key(api_key: str = Security(api_key_header)):
-    if not API_KEY:
-        return True  # No key set, allow all requests
-    if api_key and api_key == API_KEY:
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+rapidapi_secret_header = APIKeyHeader(name="X-RapidAPI-Proxy-Secret", auto_error=False)
+
+async def verify_api_key(
+    api_key: str = Security(api_key_header),
+    rapidapi_secret: str = Security(rapidapi_secret_header)
+):
+    # If no secrets configured, allow all requests
+    if not API_KEY and not RAPIDAPI_PROXY_SECRET:
         return True
+    
+    # Check RapidAPI proxy secret first
+    if RAPIDAPI_PROXY_SECRET and rapidapi_secret == RAPIDAPI_PROXY_SECRET:
+        return True
+    
+    # Check custom API key
+    if API_KEY and api_key == API_KEY:
+        return True
+    
     raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 app = FastAPI(
