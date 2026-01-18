@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends, Security
+from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse
 import httpx
 from bs4 import BeautifulSoup
@@ -8,9 +9,21 @@ import asyncio
 from functools import lru_cache
 import hashlib
 import time
+import os
+
+# API Key setup
+API_KEY = os.getenv("API_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if not API_KEY:
+        return True  # No key set, allow all requests
+    if api_key and api_key == API_KEY:
+        return True
+    raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 app = FastAPI(
-    title="Web Scraper API",
+    title="ScrapeHawk",
     description="A fast, lightweight web scraper for RapidAPI",
     version="1.0.0"
 )
@@ -54,7 +67,8 @@ async def health_check():
 @app.get("/scrape")
 async def scrape_url(
     url: str = Query(..., description="URL to scrape"),
-    selector: Optional[str] = Query(None, description="CSS selector to extract specific elements")
+    selector: Optional[str] = Query(None, description="CSS selector to extract specific elements"),
+    authorized: bool = Depends(verify_api_key)
 ):
     """
     Scrape a webpage and extract content.
@@ -113,7 +127,8 @@ async def scrape_url(
 @app.get("/scrape/links")
 async def scrape_links(
     url: str = Query(..., description="URL to scrape links from"),
-    external_only: bool = Query(False, description="Only return external links")
+    external_only: bool = Query(False, description="Only return external links"),
+    authorized: bool = Depends(verify_api_key)
 ):
     """
     Extract all links from a webpage.
@@ -158,7 +173,10 @@ async def scrape_links(
     }
 
 @app.get("/scrape/meta")
-async def scrape_metadata(url: str = Query(..., description="URL to extract metadata from")):
+async def scrape_metadata(
+    url: str = Query(..., description="URL to extract metadata from"),
+    authorized: bool = Depends(verify_api_key)
+):
     """
     Extract metadata (title, description, OG tags, etc.) from a webpage.
     """
