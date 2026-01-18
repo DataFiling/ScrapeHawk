@@ -12,29 +12,23 @@ import hashlib
 import time
 import os
 
-# API Key setup - supports both custom API key and RapidAPI proxy secret
+# API Key setup - supports custom API key or RapidAPI host verification
 API_KEY = os.getenv("API_KEY")
-RAPIDAPI_PROXY_SECRET = os.getenv("RAPIDAPI_PROXY_SECRET")
+RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "scrapehawk.p.rapidapi.com")
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-rapidapi_secret_header = APIKeyHeader(name="X-RapidAPI-Proxy-Secret", auto_error=False)
+rapidapi_host_header = APIKeyHeader(name="X-RapidAPI-Host", auto_error=False)
 
 async def verify_api_key(
     api_key: str = Security(api_key_header),
-    rapidapi_secret: str = Security(rapidapi_secret_header)
+    rapidapi_host: str = Security(rapidapi_host_header)
 ):
-    # Debug logging
-    print(f"DEBUG - API_KEY env: {API_KEY}")
-    print(f"DEBUG - RAPIDAPI_PROXY_SECRET env: {RAPIDAPI_PROXY_SECRET}")
-    print(f"DEBUG - Received X-API-Key: {api_key}")
-    print(f"DEBUG - Received X-RapidAPI-Proxy-Secret: {rapidapi_secret}")
-    
-    # If no secrets configured, allow all requests
-    if not API_KEY and not RAPIDAPI_PROXY_SECRET:
+    # If no API_KEY configured and no RAPIDAPI_HOST check, allow all
+    if not API_KEY and not RAPIDAPI_HOST:
         return True
     
-    # Check RapidAPI proxy secret first
-    if RAPIDAPI_PROXY_SECRET and rapidapi_secret == RAPIDAPI_PROXY_SECRET:
+    # Check if request came through RapidAPI
+    if RAPIDAPI_HOST and rapidapi_host == RAPIDAPI_HOST:
         return True
     
     # Check custom API key
