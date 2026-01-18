@@ -38,6 +38,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def normalize_url(url: str) -> str:
+    """Add https:// if no protocol is provided"""
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+    return url
+
 # Simple in-memory cache (consider Redis for production)
 cache = {}
 CACHE_TTL = 300  # 5 minutes
@@ -86,6 +93,7 @@ async def scrape_url(
     - **url**: The webpage URL to scrape
     - **selector**: Optional CSS selector to target specific elements
     """
+    url = normalize_url(url)
     cache_key = get_cache_key(url, selector or "")
     cached_data = get_cached(cache_key)
     
@@ -143,6 +151,7 @@ async def scrape_links(
     """
     Extract all links from a webpage.
     """
+    url = normalize_url(url)
     try:
         async with httpx.AsyncClient(
             timeout=30.0,
@@ -190,6 +199,7 @@ async def scrape_metadata(
     """
     Extract metadata (title, description, OG tags, etc.) from a webpage.
     """
+    url = normalize_url(url)
     try:
         async with httpx.AsyncClient(
             timeout=30.0,
