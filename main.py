@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, Security
 from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
@@ -26,6 +27,15 @@ app = FastAPI(
     title="ScrapeHawk",
     description="A fast, lightweight web scraper for RapidAPI",
     version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Simple in-memory cache (consider Redis for production)
