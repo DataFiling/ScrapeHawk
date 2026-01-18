@@ -23,6 +23,12 @@ async def verify_api_key(
     api_key: str = Security(api_key_header),
     rapidapi_secret: str = Security(rapidapi_secret_header)
 ):
+    # Debug logging
+    print(f"DEBUG - API_KEY env: {API_KEY}")
+    print(f"DEBUG - RAPIDAPI_PROXY_SECRET env: {RAPIDAPI_PROXY_SECRET}")
+    print(f"DEBUG - Received X-API-Key: {api_key}")
+    print(f"DEBUG - Received X-RapidAPI-Proxy-Secret: {rapidapi_secret}")
+    
     # If no secrets configured, allow all requests
     if not API_KEY and not RAPIDAPI_PROXY_SECRET:
         return True
